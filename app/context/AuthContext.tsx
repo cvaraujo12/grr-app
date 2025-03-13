@@ -31,6 +31,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       const supabase = getSupabaseBrowser();
       
+      if (!supabase) {
+        throw new Error('Erro ao inicializar o cliente Supabase');
+      }
+      
       // Obter a sessão atual
       const { data, error } = await supabase.auth.getSession();
       
@@ -55,6 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       const supabase = getSupabaseBrowser();
       
+      if (!supabase) {
+        throw new Error('Erro ao inicializar o cliente Supabase');
+      }
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -76,6 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Configurar monitoramento de mudanças na autenticação
   useEffect(() => {
     const supabase = getSupabaseBrowser();
+    
+    if (!supabase) {
+      console.error('Erro ao inicializar o cliente Supabase');
+      return;
+    }
     
     // Verificar sessão inicial
     refreshSession();
