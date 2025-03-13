@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getSupabaseBrowser } from '@/app/lib/supabase-browser';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
-import { EyeIcon, EyeOffIcon, UserPlus, LogIn, Mail } from 'lucide-react';
+import { EyeIcon, EyeOffIcon, UserPlus, LogIn } from 'lucide-react';
 
 export function AuthForm() {
   const router = useRouter();
@@ -26,6 +26,10 @@ export function AuthForm() {
 
     try {
       const supabase = getSupabaseBrowser();
+      
+      if (!supabase) {
+        throw new Error('Erro ao inicializar o cliente Supabase');
+      }
 
       if (isSignUp) {
         // Cadastro
