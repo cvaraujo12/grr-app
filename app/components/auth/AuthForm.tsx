@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/app/lib/supabase';
+import { getSupabaseBrowser } from '@/app/lib/supabase-browser';
 import { Button } from '@/app/components/ui/Button';
 import { Input } from '@/app/components/ui/Input';
 import { EyeIcon, EyeOffIcon, UserPlus, LogIn, Mail } from 'lucide-react';
@@ -25,6 +25,8 @@ export function AuthForm() {
     setLoading(true);
 
     try {
+      const supabase = getSupabaseBrowser();
+
       if (isSignUp) {
         // Cadastro
         const { data, error } = await supabase.auth.signUp({
@@ -44,16 +46,23 @@ export function AuthForm() {
         setMessage('Verifique seu email para confirmar o cadastro!');
       } else {
         // Login
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          if (error.message === 'Invalid login credentials') {
+            throw new Error('Email ou senha incorretos');
+          }
+          throw error;
+        }
 
-        // Redirecionar para a página inicial
-        router.push('/');
-        router.refresh();
+        if (data?.session) {
+          // Redirecionar para a página inicial
+          router.push('/');
+          router.refresh();
+        }
       }
     } catch (error: any) {
       setError(error.message || 'Ocorreu um erro ao processar sua solicitação.');
@@ -63,105 +72,88 @@ export function AuthForm() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-md p-6">
-      <h1 className="text-2xl font-bold text-center mb-6">
+    <div className="w-full max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md">
+      <h2 className="text-2xl font-bold text-center mb-6">
         {isSignUp ? 'Criar uma nova conta' : 'Entrar na sua conta'}
-      </h1>
-
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 p-3 rounded-lg mb-4">
-          {error}
-        </div>
-      )}
-
+      </h2>
+      
       {message && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 p-3 rounded-lg mb-4">
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-blue-800 dark:text-blue-300 mb-4">
           {message}
         </div>
       )}
 
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg text-red-800 dark:text-red-300 mb-4">
+          {error}
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Email
           </label>
-          <div className="relative">
-            <Input
-              id="email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="pl-10"
-            />
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          </div>
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="seu@email.com"
+            className="w-full"
+          />
         </div>
-
+        
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Senha
           </label>
           <div className="relative">
             <Input
-              id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Sua senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
               required
-              className="pr-10"
+              placeholder="Sua senha"
+              className="w-full pr-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-500"
-              aria-label={showPassword ? 'Esconder senha' : 'Mostrar senha'}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400"
             >
-              {showPassword ? (
-                <EyeOffIcon className="h-5 w-5" />
-              ) : (
-                <EyeIcon className="h-5 w-5" />
-              )}
+              {showPassword ? <EyeOffIcon size={20} /> : <EyeIcon size={20} />}
             </button>
           </div>
         </div>
-
+        
         <Button
           type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center"
+          className="w-full"
         >
           {loading ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-              Processando...
-            </>
+            'Processando...'
           ) : isSignUp ? (
             <>
-              <UserPlus className="h-4 w-4 mr-2" />
+              <UserPlus className="w-4 h-4 mr-2" />
               Criar conta
             </>
           ) : (
             <>
-              <LogIn className="h-4 w-4 mr-2" />
+              <LogIn className="w-4 h-4 mr-2" />
               Entrar
             </>
           )}
         </Button>
       </form>
-
-      <div className="mt-4 text-center">
-        <button
-          type="button"
-          onClick={() => setIsSignUp(!isSignUp)}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-        >
-          {isSignUp ? 'Já tem uma conta? Entrar' : 'Não tem uma conta? Criar'}
-        </button>
-      </div>
+      
+      <button
+        onClick={() => setIsSignUp(!isSignUp)}
+        className="w-full text-center mt-4 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+      >
+        {isSignUp ? 'Já tem uma conta? Entrar' : 'Não tem uma conta? Criar'}
+      </button>
     </div>
   );
 } 
