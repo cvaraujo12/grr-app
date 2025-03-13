@@ -16,11 +16,28 @@ export function createBrowserSupabaseClient() {
 
 // Instância singleton do cliente Supabase para o navegador
 // Use apenas quando precisar de uma instância reutilizável
-let browserSupabase: ReturnType<typeof createBrowserSupabaseClient> | null = null;
+let browserSupabase: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
 export function getSupabaseBrowser() {
   if (!browserSupabase) {
-    browserSupabase = createBrowserSupabaseClient();
+    browserSupabase = createBrowserClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          name: 'sb-auth',
+          lifetime: 60 * 60 * 24 * 7, // 7 days
+          domain: process.env.NEXT_PUBLIC_DOMAIN,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+        },
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+      }
+    );
   }
   return browserSupabase;
 } 
