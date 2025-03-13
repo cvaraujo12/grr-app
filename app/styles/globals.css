@@ -1,0 +1,26 @@
+/* Estilos existentes ... */
+
+/* Configurações de Acessibilidade */
+.high-contrast {
+  --contrast-bg: #000000;
+  --contrast-text: #ffffff;
+  --contrast-border: #ffffff;
+}
+
+.high-contrast * {
+  background-color: var(--contrast-bg) !important;
+  color: var(--contrast-text) !important;
+  border-color: var(--contrast-border) !important;
+}
+
+.reduce-motion * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Tamanhos de fonte */
+.text-size-large {
+  font-size: 1.2rem;
+}
+
+/* ... resto dos estilos existentes ... */ 
